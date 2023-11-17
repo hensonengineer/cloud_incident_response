@@ -1,0 +1,34 @@
+## Security Incident Response Playbook for a scenario where an AWS API key has been leaked and used by a threat actor in the environment. ##
+
+#Step 1: Initial Response
+#Confirmation of Incident:
+
+#Verify the authenticity of the incident through initial logs or alerts related to the compromised key.
+
+#Disable or delete the compromised AWS API key to prevent further unauthorized access.
+aws iam update-access-key --access-key-id COMPROMISED_KEY_ID --status Inactive
+
+#Rotate any other keys or credentials associated with the compromised key.
+aws iam update-login-profile --user-name USERNAME --no-password-reset-required
+aws iam update-user --user-name USERNAME --no-console-access
+aws iam update-access-key --access-key-id COMPROMISED_KEY_ID --status Inactive # other keys associated with user
+
+#Step 2: Investigation
+#3. Determining the Compromise Timeline:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=COMPROMISED_KEY_ID --max-results 1 --query 'Events[0].EventTime'
+
+#4. List Resources Accessed by the Key:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=COMPROMISED_KEY_ID --query 'Events[?EventName == `AwsApiCall`].Resources[]'
+
+#5. Check for IAM Resource Creation:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=COMPROMISED_KEY_ID --query 'Events[?EventName == `CreateUser` || EventName == `CreateGroup` || EventName == `CreateRole`]'
+
+Step 4: Communication and Documentation
+Incident Reporting:
+Document the incident details, actions taken, resources accessed, and any remediation steps.
+Notify relevant stakeholders or authorities about the incident and the actions taken.
+Remember to adapt these steps to your specific AWS environment and security policies. Additionally, for a comprehensive investigation or in complex cases, consider involving your security team or AWS support for further assistance and analysis.
+
+
+
+
