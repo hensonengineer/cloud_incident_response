@@ -1,0 +1,41 @@
+## Security Incident Response Playbook for a compromised AWS IAM role (STS Token) scenario, with AWS CLI commands ##
+
+#Step 1: Initial Response
+#Confirmation of Incident:
+
+#Verify the authenticity of the incident through initial logs or alerts related to the compromised IAM role.
+#Isolate when the Role was used
+
+aws cloudtrail lookup-events \
+--lookup-attributes AttributeKey=ResourceName,AttributeValue=ROLE_ARN \
+--start-time "2023-01-01T00:00:00Z" \
+--end-time "2023-12-31T23:59:59Z" \
+--query 'Events[?((EventName == `AssumeRole` || EventName == `AwsApiCall`) && Resources[?contains(ARN, `ROLE_ARN`))].{EventName: EventName, EventTime: EventTime, Resources: Resources[]}'
+
+
+Step 2: Investigation
+#a. Determining entities that assumed the role:
+aws cloudtrail lookup-events \
+--lookup-attributes AttributeKey=ResourceName,AttributeValue=ROLE_ARN \
+--query 'Events[?EventName == `AssumeRole` && Resources[?ARN == `ROLE_ARN`]].[EventTime, EventName, Resources[], Username, EventSource]'
+
+
+#b. List Resources Accessed by the Role:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=ROLE_ARN --query 'Events[?EventName == `AssumeRole`].Resources[]'
+
+
+
+#c. Check for IAM Resource Creation:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreateUser --query 'Events[?EventName == `CreateUser` || EventName == `CreateGroup` || EventName == `CreateRole`]'
+Modify the event names as necessary to cover other IAM resource creation actions (CreateUser, CreateGroup, CreateRole, etc.) related to the compromised role.
+
+Step 3: Mitigation
+#4. Revoking session permissions before a specified time by modifying IAM Policy
+https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_revoke-sessions.html
+
+
+
+Step 4: Communication and Documentation
+Incident Reporting:
+Document the incident details, actions taken, resources accessed, and any remediation steps.
+Notify relevant stakeholders or authorities about the incident and the actions taken.
