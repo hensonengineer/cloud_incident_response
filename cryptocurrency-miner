@@ -1,0 +1,37 @@
+## Incident Response Playbook: EC2 Instance Compromise Bitcoin miner ##
+# Here we choose not to stop the instance, but isolate it instead to preserve 
+# contents of volitile memory for forensic investigation
+
+#1. Initial Response and Assessment
+  #Identify and confirm the cryptocurrency mining software on the EC2 instance.
+  #Log the detection time and actions taken.
+
+#2. Communication
+  #Notify the relevant team members and management.
+  #Prepare external stakeholder communication without revealing sensitive details.
+
+#3. Isolation of Compromised EC2 Instance
+  #Create a Forensic VPC:
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+
+  #Create a Forensic Subnet within the VPC:
+aws ec2 create-subnet --vpc-id vpc-123abc45 --cidr-block 10.0.1.0/24
+
+  #Create an Isolation Security Group:
+aws ec2 create-security-group --group-name isolation-sg --description "Isolation SG" --vpc-id vpc-123abc45
+
+  #Configure the Security Group to allow only specific traffic:
+aws ec2 authorize-security-group-ingress --group-id sg-678de90f --protocol tcp --port 22 --cidr 10.0.1.10/32
+aws ec2 authorize-security-group-egress --group-id sg-678de90f --protocol tcp --port 22 --cidr 10.0.1.10/32
+
+  # Attach the Security Group to the Compromised Instance:
+aws ec2 modify-instance-attribute --instance-id i-0a1b2c3d4e5f67890 --groups sg-678de90f
+
+#4. Snapshot Creation for Forensics
+  #Create a Snapshot of the Compromised Instance:
+aws ec2 create-snapshot --volume-id vol-0123abcd --description "Forensic snapshot of compromised instance"
+
+#5. Forensic Analysis
+#Analyze the snapshot for root cause, entry points, and extent of the compromise.
+#Keep a detailed record of the forensic analysis.
+# Use Linux distribution specifically tailored for digital forensics and incident response: CAINE (Computer Aided INvestigative Environment).
