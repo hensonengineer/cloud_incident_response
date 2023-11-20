@@ -1,0 +1,6 @@
+{
+    "LoggingEnabled": {
+        "TargetBucket": "logs-target-bucket",
+        "TargetPrefix": "logs-prefix/"
+    }
+}
