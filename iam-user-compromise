@@ -1,0 +1,23 @@
+## Security Incident Response Playbook: AWS IAM User Identity Compromise ##
+#Step 1: Initial Response
+#Confirmation of Incident:
+
+#Verify the authenticity of the incident through initial logs or alerts related to the compromised IAM user.
+#Disable the Compromised IAM User's Access:
+aws iam update-login-profile --user-name COMPROMISED_USER --password-reset-required
+
+#deactivate all access keys associated with the user:
+aws iam list-access-keys --user-name COMPROMISED_USER --query 'AccessKeyMetadata[*].AccessKeyId' --output text | xargs -n 1 aws iam update-access-key --user-name COMPROMISED_USER --access-key-id {} --status Inactive
+
+#Step 2: Investigation
+#Determining the Compromise Timeline:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=COMPROMISED_USER --start-time START_DATE --end-time END_DATE --query 'Events[0].EventTime'
+
+#List Resources Accessed by the User:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=COMPROMISED_USER --query 'Events[?EventName == `AwsApiCall`].Resources[]'
+
+#Check for Unauthorized IAM Resource Creation:
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=COMPROMISED_USER --query 'Events[?EventName == `CreateUser` || EventName == `CreateGroup` || EventName == `CreateRole`]'
+
+Step 3: Containment and Mitigation
+Review and Remove Unauthorized Changes:
