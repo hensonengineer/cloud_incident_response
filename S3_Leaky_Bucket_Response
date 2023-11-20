@@ -1,0 +1,39 @@
+##Incident Response Playbook: AWS S3 Bucket Misconfigured Allowing Public Read##
+
+  #1. Initial Response and Assessment
+    #Identify the misconfigured S3 bucket and determine the Data Classification Type contained.
+    #Understand the data classification of the inforation that was accessed. 
+    #Log the detection time and actions taken.
+
+  #2. Communication
+    #Notify relevant team members and management.
+    #Prepare external stakeholder communication without revealing sensitive details.
+
+  #3. Investigation and Assessment of Access
+    #Enable Access Logging on the Bucket (if not already enabled):
+
+aws s3api put-bucket-logging --bucket [MISCONFIGURED_BUCKET] --bucket-logging-status file:///path/to/logging.json
+    #Note: The logging.json file should contain the logging policy, including the target bucket and prefix.
+
+    #If Server Access Logs were ON BEFORE the Incident, Use AWS CLI or AWS Management Console to access the logs in the logging bucket.
+
+aws s3 ls s3://[LOG_BUCKET_NAME]/[LOG_PREFIX]
+aws s3 sync s3://[LOG_BUCKET_NAME]/[LOG_PREFIX] /local/path
+
+    #If Access Logs were NOT on before the Incident:
+
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=GetObject --start-time [START_TIME] --end-time [END_TIME] --query 'Events[?Resources[?ResourceName==`[BUCKET_NAME]`]]'
+
+    #Use log analysis tools to parse and inspect the access logs for read events, including timestamps and, if available, IP addresses.
+
+    #4. Lock Down the Bucket, Remove Public Access:
+
+aws s3api put-bucket-acl --bucket [MISCONFIGURED_BUCKET] --acl private
+
+    #alternate Modify Bucket Policy to Restrict Access:
+
+
+aws s3api put-bucket-policy --bucket [MISCONFIGURED_BUCKET] --policy file:///path/to/policy.json
+    #Note: The policy.json file should contain the updated policy that restricts public access.
+
+5. Document incident and communicate per company policy
