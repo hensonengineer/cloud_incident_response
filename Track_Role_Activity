@@ -1,0 +1,18 @@
+###Get all the Role's API calls from Cloud Trail
+
+https://repost.aws/knowledge-center/view-iam-history
+
+#You have to get the assumed role's session name [ roleSessionName ] with this command
+
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<RoleARN>
+
+#OR pull the Session Name out of the API call when Role was assumed:
+
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<RoleArn> | jq -r '.Events[] | select(.CloudTrailEvent | fromjson | .eventName == "AssumeRole") | .CloudTrailEvent'
+
+
+#Sort on UserName, and enter in the assumed role session name.
+
+#1. In Filter, select the dropdown list. Then, choose User name
+
+#2. In User name [ roleSessionName ] 
